@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import { it, expect, describe } from 'vitest';
 import Greet from '../../src/components/Greet';
 import '@testing-library/jest-dom/vitest';
 
@@ -10,7 +9,7 @@ describe('Greet', () => {
         expect(heading).toBeInTheDocument();
         expect(heading).toHaveTextContent(/irene/i);
     });
-    it.only('should render login button when name is not provided', () => {
+    it('should render login button when name is not provided', () => {
         render(<Greet />);
         const button = screen.getByRole('button');
         expect(button).toBeInTheDocument();
