@@ -2,6 +2,12 @@ import '@testing-library/jest-dom/vitest';
 
 // Error: ResizeObserver is not defined and npm i -D resize-observer-polyfill
 import ResizeObserver from 'resize-observer-polyfill';
+import { server } from './mocks/server';
+
+beforeAll(() => server.listen());
+afterEach(() => server.resetHandlers());
+afterAll(() => server.close());
+
 global.ResizeObserver = ResizeObserver;
 
 // TypeError: matchMedia is not a function.
