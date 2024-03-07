@@ -10,8 +10,11 @@ describe('OrderStatusSelector', () => {
                 <OrderStatusSelector onChange={vi.fn()} />
             </Theme>
         );
+        const user = userEvent.setup();
         return {
             trigger: screen.getByRole('combobox'),
+            getOptions: () => screen.findAllByRole('option'),
+            user,
         };
     };
 
@@ -22,12 +25,11 @@ describe('OrderStatusSelector', () => {
     });
 
     it('should render correct statuses', async () => {
-        const { trigger } = renderComponent();
+        const { trigger, getOptions, user } = renderComponent();
 
-        const user = userEvent.setup();
         await user.click(trigger);
 
-        const options = await screen.findAllByRole('option');
+        const options = await getOptions();
         const textOptions = options.map((option) => option.textContent);
 
         expect(textOptions).toHaveLength(3);
