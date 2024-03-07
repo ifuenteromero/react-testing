@@ -11,7 +11,7 @@ const ProductList = () => {
         const fetchProducts = async () => {
             try {
                 setLoading(true);
-                const { data } = await axios.get('/products');
+                const { data } = await axios.get<Product[]>('/products');
                 setProducts(data);
                 setLoading(false);
             } catch (error) {
