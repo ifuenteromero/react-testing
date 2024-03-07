@@ -1,5 +1,9 @@
 import '@testing-library/jest-dom/vitest';
 
+// Error: ResizeObserver is not defined and npm i -D resize-observer-polyfill
+import ResizeObserver from 'resize-observer-polyfill';
+global.ResizeObserver = ResizeObserver;
+
 // TypeError: matchMedia is not a function.
 Object.defineProperty(window, 'matchMedia', {
     writable: true,
@@ -14,3 +18,8 @@ Object.defineProperty(window, 'matchMedia', {
         dispatchEvent: vi.fn(),
     })),
 });
+
+// TypeError: target.hasPointerCapture is not a function
+window.HTMLElement.prototype.scrollIntoView = vi.fn();
+window.HTMLElement.prototype.hasPointerCapture = vi.fn();
+window.HTMLElement.prototype.releasePointerCapture = vi.fn();
