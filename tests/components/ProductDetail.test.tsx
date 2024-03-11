@@ -2,24 +2,35 @@ import { render, screen } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import ProductDetail from '../../src/components/ProductDetail';
 import { Product } from '../../src/entities';
-import { products } from '../mocks/productsData';
 import { server } from '../mocks/server';
+import { db } from '../mocks/db';
 
 describe('ProductDetail', () => {
-    const productId = 1;
+    let productId: number;
+    beforeAll(() => {
+        const product = db.product.create();
+        productId = product.id;
+    });
+
+    afterAll(() => {
+        db.product.delete({ where: { id: { equals: productId } } });
+    });
+
     const renderComponent = (id: number = productId) => {
         render(<ProductDetail productId={id} />);
         return {
-            product: products.find((p) => p.id === id) as Product,
+            product: db.product.findFirst({
+                where: { id: { equals: productId } },
+            }),
         };
     };
 
     it('should render the product', async () => {
         const { product } = renderComponent();
 
-        const productName = await screen.findByText(new RegExp(product.name));
+        const productName = await screen.findByText(new RegExp(product!.name));
         const productPrice = await screen.findByText(
-            new RegExp(product.price.toString())
+            new RegExp(product!.price.toString())
         );
 
         expect(productName).toBeInTheDocument();
@@ -27,7 +38,7 @@ describe('ProductDetail', () => {
     });
 
     it('should render message if product not found', async () => {
-        const notFoundId = products.length + 1;
+        const notFoundId = productId + 1;
         server.use(
             http.get(`/products/${notFoundId}`, () => HttpResponse.json(null))
         );
