@@ -7,6 +7,7 @@ import { HttpResponse, delay, http } from 'msw';
 import ProductList from '../../src/components/ProductList';
 import { db } from '../mocks/db';
 import { server } from '../mocks/server';
+import { QueryClient, QueryClientProvider } from 'react-query';
 
 describe('ProductList', () => {
     const productIds: number[] = [];
@@ -22,8 +23,24 @@ describe('ProductList', () => {
         db.product.delete({ where: { id: { in: productIds } } });
     });
 
+    const renderComponent = () => {
+        const client = new QueryClient({
+            // importante: si no fallan algunos tests porque no renderiza el error al hacer retry
+            defaultOptions: {
+                queries: {
+                    retry: false,
+                },
+            },
+        });
+        render(
+            <QueryClientProvider client={client}>
+                <ProductList />
+            </QueryClientProvider>
+        );
+    };
+
     it('should render the list of products', async () => {
-        render(<ProductList />);
+        renderComponent();
         const items = await screen.findAllByRole('listitem');
         expect(items.length).toBeGreaterThan(0);
     });
@@ -31,14 +48,14 @@ describe('ProductList', () => {
     it('should render no products available if no product is found', async () => {
         server.use(http.get('/products', () => HttpResponse.json([])));
 
-        render(<ProductList />);
+        renderComponent();
         const message = await screen.findByText(/no products/i);
         expect(message).toBeInTheDocument();
     });
 
     it('should render an error message when there is an error', async () => {
         server.use(http.get('/products', () => HttpResponse.error()));
-        render(<ProductList />);
+        renderComponent();
         const errorMessage = await screen.findByText(/error/i);
         expect(errorMessage).toBeInTheDocument();
     });
@@ -50,19 +67,19 @@ describe('ProductList', () => {
                 return HttpResponse.json([]);
             })
         );
-        render(<ProductList />);
+        renderComponent();
         const loading = await screen.findByText(/loading/i);
         expect(loading).toBeInTheDocument();
     });
 
     it('should remove the loading indicator after data is fetched', async () => {
-        render(<ProductList />);
+        renderComponent();
         await waitForElementToBeRemoved(() => screen.queryByText(/loading/i));
     });
 
     it('should remove the loading indicator if data fetching fails', async () => {
         server.use(http.get('/products', () => HttpResponse.error()));
-        render(<ProductList />);
+        renderComponent();
         await waitForElementToBeRemoved(() => screen.queryByText(/loading/i));
     });
 });
