@@ -7,13 +7,38 @@ import BrowseProducts from '../../src/pages/BrowseProductsPage';
 import { Theme } from '@radix-ui/themes';
 import { server } from '../mocks/server';
 import { HttpResponse, delay, http } from 'msw';
+import userEvent from '@testing-library/user-event';
+import { db } from '../mocks/db';
+import { Category, Product } from '../../src/entities';
+import { CartProvider } from '../../src/providers/CartProvider';
 
 describe('BrowseProductsPage', () => {
+    const categories: Category[] = [];
+    const products: Product[] = [];
+
+    beforeAll(() => {
+        [1, 2, 3].forEach((item) => {
+            const category = db.category.create({ name: 'Category' + item });
+            categories.push(category);
+            const product = db.product.create();
+            products.push(product);
+        });
+    });
+
+    afterAll(() => {
+        const categoryIds = categories.map((c) => c.id);
+        db.category.deleteMany({ where: { id: { in: categoryIds } } });
+        const productIds = products.map((p) => p.id);
+        db.product.deleteMany({ where: { id: { in: productIds } } });
+    });
+
     const renderComponent = () => {
         render(
-            <Theme>
-                <BrowseProducts />
-            </Theme>
+            <CartProvider>
+                <Theme>
+                    <BrowseProducts />
+                </Theme>
+            </CartProvider>
         );
     };
 
@@ -88,5 +113,40 @@ describe('BrowseProductsPage', () => {
         renderComponent();
         const error = await screen.findByText(/error/i);
         expect(error).toBeInTheDocument();
+    });
+
+    it('should render categories', async () => {
+        renderComponent();
+        const combobox = await screen.findByRole('combobox');
+        expect(combobox).toBeInTheDocument();
+
+        const user = userEvent.setup();
+        await user.click(combobox);
+
+        const options = await screen.findAllByRole('option');
+        expect(options.length).toBeGreaterThan(0);
+
+        categories.forEach((c) => {
+            const category = screen.getByRole('option', { name: c.name });
+            expect(category).toBeInTheDocument();
+        });
+
+        const allOption = screen.getByRole('option', { name: /all/i });
+        expect(allOption).toBeInTheDocument();
+    });
+
+    it('should render products', async () => {
+        renderComponent();
+        await waitForElementToBeRemoved(() =>
+            screen.queryAllByRole('cell', { name: /product/i })
+        );
+        products.forEach((p) => {
+            const productName = screen.getByRole('cell', { name: p.name });
+            const productPrice = screen.getByText(
+                new RegExp(p.price.toString())
+            );
+            expect(productName).toBeInTheDocument();
+            expect(productPrice).toBeInTheDocument();
+        });
     });
 });
