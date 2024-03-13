@@ -52,7 +52,12 @@ function BrowseProducts() {
     if (errorProducts) return <div>Error: {errorProducts}</div>;
 
     const renderCategories = () => {
-        if (isCategoriesLoading) return <Skeleton />;
+        if (isCategoriesLoading)
+            return (
+                <div role='progressbar' aria-label='loading categories'>
+                    <Skeleton />
+                </div>
+            );
         if (errorCategories) return <div>Error: {errorCategories}</div>;
         return (
             <Select.Root
@@ -101,13 +106,13 @@ function BrowseProducts() {
                     {isProductsLoading &&
                         skeletons.map((skeleton) => (
                             <Table.Row key={skeleton}>
-                                <Table.Cell>
+                                <Table.Cell aria-label='loading product'>
                                     <Skeleton />
                                 </Table.Cell>
-                                <Table.Cell>
+                                <Table.Cell aria-label='loading product'>
                                     <Skeleton />
                                 </Table.Cell>
-                                <Table.Cell>
+                                <Table.Cell aria-label='loading product'>
                                     <Skeleton />
                                 </Table.Cell>
                             </Table.Row>
