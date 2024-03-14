@@ -190,17 +190,24 @@ const renderComponent = () => {
         </CartProvider>
     );
 
-    return {
-        getProductsSkeleton: () =>
-            screen.queryAllByRole('cell', {
-                name: /product/i,
-            }),
+    const getProductsSkeleton = () =>
+        screen.queryAllByRole('cell', {
+            name: /product/i,
+        });
 
-        getCategoriesSkeleton: () =>
-            screen.queryByRole('progressbar', {
-                name: /categories/i,
-            }),
-        getCategoriesCombobox: () => screen.queryByRole('combobox'),
-        user: userEvent.setup(),
+    const getCategoriesSkeleton = () =>
+        screen.queryByRole('progressbar', {
+            name: /categories/i,
+        });
+
+    const getCategoriesCombobox = () => screen.queryByRole('combobox');
+
+    const user = userEvent.setup();
+
+    return {
+        getProductsSkeleton,
+        getCategoriesSkeleton,
+        getCategoriesCombobox,
+        user,
     };
 };
