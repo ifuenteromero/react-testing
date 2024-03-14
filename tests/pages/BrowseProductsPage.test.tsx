@@ -9,7 +9,7 @@ import userEvent from '@testing-library/user-event';
 import { Category, Product } from '../../src/entities';
 import BrowseProducts from '../../src/pages/BrowseProductsPage';
 import { CartProvider } from '../../src/providers/CartProvider';
-import { db } from '../mocks/db';
+import { db, getProductsByCategory } from '../mocks/db';
 import { simulateDelay, simulateError } from '../utils';
 
 describe('BrowseProductsPage', () => {
@@ -119,65 +119,37 @@ describe('BrowseProductsPage', () => {
     });
 
     it('should filter products by category', async () => {
-        const { getCategoriesCombobox, getCategoriesSkeleton, user } =
-            renderComponent();
+        const {
+            selectCategory,
+            getCategoriesSkeleton,
+            expectProductsToBeInTheDocument,
+        } = renderComponent();
+
         await waitForElementToBeRemoved(getCategoriesSkeleton);
-        const combobox = getCategoriesCombobox();
-        await user.click(combobox!);
 
         const selectedCategory = categories[0];
+        await selectCategory(selectedCategory.name);
 
-        const option = screen.getByRole('option', {
-            name: selectedCategory.name,
-        });
-
-        await user.click(option);
-
-        const products = db.product.findMany({
-            where: { categoryId: { equals: selectedCategory.id } },
-        });
-
-        const rows = screen.getAllByRole('row');
-        const productRowsCount = rows.length - 1; // la cabecera
-
-        expect(productRowsCount).toBe(products.length);
-
-        products.forEach((p) => {
-            const productName = screen.getByRole('cell', { name: p.name });
-            expect(productName).toBeInTheDocument();
-            const row = productName.closest('tr');
-            const productPrice = within(row!).getByText(
-                new RegExp(p.price.toString())
-            );
-            expect(productPrice).toBeInTheDocument();
-        });
+        const selectedCategoryProducts = getProductsByCategory(
+            selectedCategory.id
+        );
+        expectProductsToBeInTheDocument(selectedCategoryProducts);
     });
 
     it('should render all products if All category is selected', async () => {
-        const { getCategoriesCombobox, getCategoriesSkeleton, user } =
-            renderComponent();
+        const {
+            selectCategory,
+            getCategoriesSkeleton,
+            expectProductsToBeInTheDocument,
+        } = renderComponent();
         await waitForElementToBeRemoved(getCategoriesSkeleton);
-        const combobox = getCategoriesCombobox();
-        await user.click(combobox!);
 
-        const selectedCategory = categories[0];
-        const option = screen.getByRole('option', {
-            name: selectedCategory.name,
-        });
+        const selectedCategoryName = categories[0].name;
+        await selectCategory(selectedCategoryName);
+        await selectCategory(/all/i);
 
-        await user.click(option);
-        await user.click(combobox!);
-        const allOption = screen.getByRole('option', {
-            name: /all/i,
-        });
-
-        await user.click(allOption);
-
-        const allProducts = db.product.getAll();
-        const rows = screen.getAllByRole('row');
-        const productRowsCount = rows.length - 1;
-
-        expect(productRowsCount).toBe(allProducts.length);
+        const allProducts = getProductsByCategory();
+        expectProductsToBeInTheDocument(allProducts);
     });
 });
 
@@ -204,10 +176,39 @@ const renderComponent = () => {
 
     const user = userEvent.setup();
 
+    const selectCategory = async (name: RegExp | string) => {
+        const combobox = getCategoriesCombobox();
+        await user.click(combobox!);
+
+        const option = screen.getByRole('option', {
+            name,
+        });
+        await user.click(option);
+    };
+
+    const expectProductsToBeInTheDocument = (products: Product[]) => {
+        const rows = screen.getAllByRole('row');
+        const productRowsCount = rows.length - 1;
+
+        expect(productRowsCount).toBe(products.length);
+
+        products.forEach((p) => {
+            const productName = screen.getByRole('cell', { name: p.name });
+            expect(productName).toBeInTheDocument();
+            const row = productName.closest('tr');
+            const productPrice = within(row!).getByText(
+                new RegExp(p.price.toString())
+            );
+            expect(productPrice).toBeInTheDocument();
+        });
+    };
+
     return {
         getProductsSkeleton,
         getCategoriesSkeleton,
         getCategoriesCombobox,
         user,
+        selectCategory,
+        expectProductsToBeInTheDocument,
     };
 };
