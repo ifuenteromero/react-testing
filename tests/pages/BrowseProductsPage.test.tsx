@@ -3,6 +3,7 @@ import {
     render,
     screen,
     waitForElementToBeRemoved,
+    within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Category, Product } from '../../src/entities';
@@ -125,7 +126,8 @@ describe('BrowseProductsPage', () => {
 
         products.forEach((p) => {
             const productName = screen.getByRole('cell', { name: p.name });
-            const productPrice = screen.getByText(
+            const row = productName.closest('tr');
+            const productPrice = within(row!).getByText(
                 new RegExp(p.price.toString())
             );
             expect(productName).toBeInTheDocument();
