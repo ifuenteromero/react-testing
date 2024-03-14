@@ -39,30 +39,6 @@ describe('BrowseProductsPage', () => {
         db.product.deleteMany({ where: { id: { in: productIds } } });
     });
 
-    const renderComponent = () => {
-        render(
-            <CartProvider>
-                <Theme>
-                    <BrowseProducts />
-                </Theme>
-            </CartProvider>
-        );
-
-        return {
-            getProductsSkeleton: () =>
-                screen.queryAllByRole('cell', {
-                    name: /product/i,
-                }),
-
-            getCategoriesSkeleton: () =>
-                screen.queryByRole('progressbar', {
-                    name: /categories/i,
-                }),
-            getCategoriesCombobox: () => screen.queryByRole('combobox'),
-            user: userEvent.setup(),
-        };
-    };
-
     it('should render a loading skeleton when fetching categories', () => {
         simulateDelay('/categories');
         const { getCategoriesSkeleton } = renderComponent();
@@ -204,3 +180,27 @@ describe('BrowseProductsPage', () => {
         expect(productRowsCount).toBe(allProducts.length);
     });
 });
+
+const renderComponent = () => {
+    render(
+        <CartProvider>
+            <Theme>
+                <BrowseProducts />
+            </Theme>
+        </CartProvider>
+    );
+
+    return {
+        getProductsSkeleton: () =>
+            screen.queryAllByRole('cell', {
+                name: /product/i,
+            }),
+
+        getCategoriesSkeleton: () =>
+            screen.queryByRole('progressbar', {
+                name: /categories/i,
+            }),
+        getCategoriesCombobox: () => screen.queryByRole('combobox'),
+        user: userEvent.setup(),
+    };
+};
