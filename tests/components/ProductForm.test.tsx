@@ -24,7 +24,7 @@ describe('ProductForm', () => {
         db.product.delete({ where: { id: { equals: product.id } } });
     });
 
-    const renderComponent = () => {
+    const renderComponent = (product?: Product) => {
         const onSubmit = vi.fn();
 
         render(<ProductForm product={product} onSubmit={onSubmit} />, {
@@ -34,27 +34,27 @@ describe('ProductForm', () => {
         const user = userEvent.setup();
 
         return {
-            getNameInput: () => screen.getByPlaceholderText(/name/i),
-            getPriceInput: () => screen.getByPlaceholderText(/price/i),
-            getCombobox: () =>
-                screen.getByRole('combobox', { name: /category/i }),
+            getInputs: () => ({
+                nameInput: screen.getByPlaceholderText(/name/i),
+                priceInput: screen.getByPlaceholderText(/price/i),
+                categoriesInput: screen.getByRole('combobox', {
+                    name: /category/i,
+                }),
+            }),
             user,
-            getForm: async () => await screen.findByRole('form'),
+            waitForFormToLoad: () => screen.findByRole('form'),
         };
     };
 
     it('should render form fields', async () => {
-        const { getNameInput, getPriceInput, getCombobox, user, getForm } =
-            renderComponent();
-        await getForm();
-        const nameInput = getNameInput();
+        const { getInputs, user, waitForFormToLoad } = renderComponent();
+        await waitForFormToLoad();
+        const { nameInput, priceInput, categoriesInput } = getInputs();
         expect(nameInput).toBeInTheDocument();
-        const priceInput = getPriceInput();
         expect(priceInput).toBeInTheDocument();
-        const combobox = getCombobox();
-        expect(combobox).toBeInTheDocument();
+        expect(categoriesInput).toBeInTheDocument();
 
-        await user.click(combobox);
+        await user.click(categoriesInput);
         const options = await screen.findAllByRole('option');
         expect(options).toHaveLength(3);
         categories.forEach((c) => {
@@ -64,16 +64,13 @@ describe('ProductForm', () => {
     });
 
     it('should populate form fields when editing a product', async () => {
-        const { getForm, getNameInput, getPriceInput, getCombobox } =
-            renderComponent();
-        await getForm();
+        const { waitForFormToLoad, getInputs } = renderComponent(product);
+        await waitForFormToLoad();
 
-        const nameInput = getNameInput();
+        const { nameInput, priceInput, categoriesInput } = getInputs();
         expect(nameInput).toHaveValue(product.name);
-        const priceInput = getPriceInput();
         expect(priceInput).toHaveValue(product.price.toString());
         const category = categories[0];
-        const combobox = getCombobox();
-        expect(combobox).toHaveTextContent(category.name);
+        expect(categoriesInput).toHaveTextContent(category.name);
     });
 });
