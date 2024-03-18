@@ -34,22 +34,24 @@ describe('ProductForm', () => {
         const user = userEvent.setup();
 
         return {
-            getInputs: () => ({
-                nameInput: screen.getByPlaceholderText(/name/i),
-                priceInput: screen.getByPlaceholderText(/price/i),
-                categoriesInput: screen.getByRole('combobox', {
-                    name: /category/i,
-                }),
-            }),
             user,
-            waitForFormToLoad: () => screen.findByRole('form'),
+            waitForFormToLoad: async () => {
+                await screen.findByRole('form');
+                return {
+                    nameInput: screen.getByPlaceholderText(/name/i),
+                    priceInput: screen.getByPlaceholderText(/price/i),
+                    categoriesInput: screen.getByRole('combobox', {
+                        name: /category/i,
+                    }),
+                };
+            },
         };
     };
 
     it('should render form fields', async () => {
-        const { getInputs, user, waitForFormToLoad } = renderComponent();
-        await waitForFormToLoad();
-        const { nameInput, priceInput, categoriesInput } = getInputs();
+        const { user, waitForFormToLoad } = renderComponent();
+        const { nameInput, priceInput, categoriesInput } =
+            await waitForFormToLoad();
         expect(nameInput).toBeInTheDocument();
         expect(priceInput).toBeInTheDocument();
         expect(categoriesInput).toBeInTheDocument();
@@ -64,13 +66,20 @@ describe('ProductForm', () => {
     });
 
     it('should populate form fields when editing a product', async () => {
-        const { waitForFormToLoad, getInputs } = renderComponent(product);
-        await waitForFormToLoad();
+        const { waitForFormToLoad } = renderComponent(product);
+        const { nameInput, priceInput, categoriesInput } =
+            await waitForFormToLoad();
 
-        const { nameInput, priceInput, categoriesInput } = getInputs();
         expect(nameInput).toHaveValue(product.name);
         expect(priceInput).toHaveValue(product.price.toString());
         const category = categories[0];
         expect(categoriesInput).toHaveTextContent(category.name);
+    });
+
+    it('should put focus on the name field', async () => {
+        const { waitForFormToLoad } = renderComponent();
+        const { nameInput } = await waitForFormToLoad();
+
+        expect(nameInput).toHaveFocus();
     });
 });
