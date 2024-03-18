@@ -43,6 +43,9 @@ describe('ProductForm', () => {
                     categoriesInput: screen.getByRole('combobox', {
                         name: /category/i,
                     }),
+                    submitButton: screen.getByRole('button', {
+                        name: /submit/i,
+                    }),
                 };
             },
         };
@@ -81,5 +84,23 @@ describe('ProductForm', () => {
         const { nameInput } = await waitForFormToLoad();
 
         expect(nameInput).toHaveFocus();
+    });
+
+    it('should display an error if name is missing', async () => {
+        const { waitForFormToLoad, user } = renderComponent();
+        const { priceInput, categoriesInput, submitButton } =
+            await waitForFormToLoad();
+
+        await user.type(priceInput, '10');
+        await user.click(categoriesInput);
+        const options = screen.getAllByRole('option');
+        const option = options[0];
+        await user.click(option);
+        await user.click(submitButton);
+
+        const error = screen.getByRole('alert');
+        expect(error).toBeInTheDocument();
+        expect(error).toHaveTextContent(/name/i);
+        expect(error).toHaveTextContent(/required/i);
     });
 });
