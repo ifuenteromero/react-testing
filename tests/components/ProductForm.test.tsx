@@ -149,6 +149,11 @@ describe('ProductForm', () => {
             name: 'a'.repeat(256),
             errorMessage: /255/i,
         },
+        {
+            scenario: 'empty',
+            name: '    ',
+            errorMessage: /required/i,
+        },
     ])(
         'should display an error if name is $scenario',
         async ({ name, errorMessage }) => {
@@ -250,4 +255,6 @@ describe('ProductForm', () => {
         await form.fill(form.validData);
         expect(form.submitButton).toBeEnabled();
     });
+
+    it('should', () => {});
 });
