@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { Toaster } from 'react-hot-toast';
 import ProductForm from '../../src/components/ProductForm';
 import { Category, Product } from '../../src/entities';
 import AllProviders from '../AllProviders';
@@ -8,13 +9,15 @@ import { db } from '../mocks/db';
 describe('ProductForm', () => {
     const categories: Category[] = [];
     let product: Product;
+    let productCategoryId: number;
 
     beforeAll(() => {
         [1, 2, 3].forEach(() => {
             const category = db.category.create();
             categories.push(category);
         });
-        product = db.product.create({ categoryId: categories[0].id });
+        productCategoryId = categories[0].id;
+        product = db.product.create({ categoryId: productCategoryId });
     });
 
     afterAll(() => {
@@ -24,12 +27,18 @@ describe('ProductForm', () => {
         db.product.delete({ where: { id: { equals: product.id } } });
     });
 
-    const renderComponent = (product?: Product) => {
+    const renderComponent = (_product?: Product) => {
         const onSubmit = vi.fn();
 
-        render(<ProductForm product={product} onSubmit={onSubmit} />, {
-            wrapper: AllProviders,
-        });
+        render(
+            <>
+                <ProductForm product={_product} onSubmit={onSubmit} />
+                <Toaster />
+            </>,
+            {
+                wrapper: AllProviders,
+            }
+        );
 
         const user = userEvent.setup();
 
@@ -40,6 +49,7 @@ describe('ProductForm', () => {
         };
 
         return {
+            onSubmit,
             user,
             expectErrorToBeInTheDocument,
             waitForFormToLoad: async () => {
@@ -59,10 +69,10 @@ describe('ProductForm', () => {
                 };
 
                 const validData: FormData = {
-                    id: 1,
+                    id: product.id,
                     name: 'aaaa',
                     price: 10,
-                    categoryId: 1,
+                    categoryId: product?.categoryId,
                 };
 
                 const fill = async (product: FormData) => {
@@ -187,4 +197,28 @@ describe('ProductForm', () => {
             expectErrorToBeInTheDocument(errorMessage);
         }
     );
+
+    it('should call onSubmit with the correct data', async () => {
+        const { onSubmit, waitForFormToLoad } = renderComponent();
+        const form = await waitForFormToLoad();
+        const data = {
+            ...form.validData,
+            price: 23,
+            name: 'hola',
+        };
+        delete data.id; // si no no pasa. ¿?
+        await form.fill(data);
+
+        expect(onSubmit).toHaveBeenCalledWith(data);
+    });
+
+    it('should display a toast if submission fails', async () => {
+        const { onSubmit, waitForFormToLoad } = renderComponent();
+        onSubmit.mockRejectedValue({});
+        const form = await waitForFormToLoad();
+        await form.fill(form.validData);
+        const toast = screen.getByRole('status');
+        expect(toast).toBeInTheDocument();
+        expect(toast).toHaveTextContent(/error/i);
+    });
 });
