@@ -74,6 +74,7 @@ describe('ProductForm', () => {
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
                         await user.type(priceInput, product.price.toString());
 
+                    await user.tab();
                     await user.click(categoriesInput);
                     const options = screen.getAllByRole('option');
                     const option = options[0];
